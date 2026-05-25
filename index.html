@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>國小英語總複習</title>
+    <!-- 引入 Tailwind CSS 確保畫面美觀 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes bounce-subtle {
+            0%, 100% { transform: translateY(-5%); }
+            50% { transform: translateY(0); }
+        }
+        .animate-bounce-subtle {
+            animation: bounce-subtle 2s infinite ease-in-out;
+        }
+        .fade-in {
+            animation: fadeIn 0.3s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        /* 隱藏不想顯示的區塊 */
+        .hidden-view {
+            display: none !important;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen font-sans text-slate-800">
+
+    <!-- ========================================== -->
+    <!-- 視圖 1: 主選單 (Main Menu)                 -->
+    <!-- ========================================== -->
+    <div id="view-menu" class="min-h-screen p-6 flex flex-col items-center fade-in">
+        <header class="text-center mb-10 w-full max-w-2xl mt-8">
+            <h1 class="text-4xl sm:text-5xl font-extrabold text-indigo-600 mb-4 drop-shadow-sm flex items-center justify-center gap-3">
+                <span>🚀</span> 英語素養大挑戰
+            </h1>
+            <p class="text-slate-600 font-medium text-lg">3 - 6 年級單字、發音與句型統整</p>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-5xl">
+            <!-- 模組 A: 單字 -->
+            <div class="bg-white rounded-3xl p-6 shadow-xl shadow-indigo-100 border-2 border-indigo-50 hover:-translate-y-1 transition-transform">
+                <div class="w-14 h-14 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center mb-4 text-3xl">📚</div>
+                <h2 class="text-2xl font-bold text-slate-800 mb-4">主題單字</h2>
+                <div class="space-y-3" id="menu-vocab-container">
+                    <!-- 動態生成按鈕 -->
+                </div>
+            </div>
+
+            <!-- 模組 B: 發音 -->
+            <div class="bg-white rounded-3xl p-6 shadow-xl shadow-orange-100 border-2 border-orange-50 hover:-translate-y-1 transition-transform">
+                <div class="w-14 h-14 bg-orange-100 text-orange-600 rounded-2xl flex items-center justify-center mb-4 text-3xl">🎧</div>
+                <h2 class="text-2xl font-bold text-slate-800 mb-4">Phonics 聽力</h2>
+                <div class="space-y-3" id="menu-phonics-container">
+                    <!-- 動態生成按鈕 -->
+                </div>
+            </div>
+
+            <!-- 模組 C: 句型 -->
+            <div class="bg-white rounded-3xl p-6 shadow-xl shadow-emerald-100 border-2 border-emerald-50 hover:-translate-y-1 transition-transform">
+                <div class="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mb-4 text-3xl">🧩</div>
+                <h2 class="text-2xl font-bold text-slate-800 mb-4">句型解謎</h2>
+                <div class="space-y-3" id="menu-sentences-container">
+                    <!-- 動態生成按鈕 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 遊戲中通用 Header                          -->
+    <!-- ========================================== -->
+    <div id="game-header" class="hidden-view w-full max-w-3xl mx-auto pt-6 px-6 flex justify-between items-center mb-8 fade-in">
+        <button onclick="goHome()" class="flex items-center gap-2 text-slate-500 hover:text-slate-800 bg-white px-4 py-2 rounded-full shadow-sm font-bold transition-colors">
+            ⬅️ 返回
+        </button>
+        <div class="flex gap-2 sm:gap-4 flex-wrap justify-end">
+            <!-- 計時器 -->
+            <div id="ui-timer-container" class="bg-white px-4 py-2 rounded-full shadow-sm font-bold text-slate-700 flex items-center gap-2 transition-colors">
+                ⏳ <span id="ui-timer">15</span>s
+            </div>
+            <div class="bg-white px-4 py-2 rounded-full shadow-sm font-bold text-slate-700 flex items-center gap-2">
+                進度: <span id="ui-progress">1 / 5</span>
+            </div>
+            <div class="bg-yellow-100 px-4 py-2 rounded-full shadow-sm font-bold text-yellow-600 flex items-center gap-2">
+                ⭐ <span id="ui-score">0</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 視圖 2: 單字挑戰 (Vocab View)              -->
+    <!-- ========================================== -->
+    <div id="view-vocab" class="hidden-view min-h-screen bg-blue-50 flex-col items-center px-6 pb-6">
+        <div class="bg-white rounded-3xl p-8 max-w-3xl w-full mx-auto shadow-xl text-center fade-in">
+            <p class="text-blue-500 font-bold mb-4">請選出正確的中文意思</p>
+            <div class="mb-10 flex flex-col items-center justify-center gap-4">
+                <h2 id="vocab-en-text" class="text-5xl sm:text-6xl font-extrabold text-slate-800 break-words">Word</h2>
+                <button onclick="playCurrentAudio()" class="p-4 bg-blue-100 text-blue-600 rounded-full hover:bg-blue-200 transition-colors shadow-sm text-2xl">🔊</button>
+            </div>
+            <div id="vocab-options" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <!-- 選項動態生成 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 視圖 3: 發音聽力 (Phonics View)            -->
+    <!-- ========================================== -->
+    <div id="view-phonics" class="hidden-view min-h-screen bg-orange-50 flex-col items-center px-6 pb-6">
+        <div class="bg-white rounded-3xl p-8 max-w-3xl w-full mx-auto shadow-xl text-center fade-in">
+            <!-- 移除了畫面上的規則提示，變成真正的盲聽測驗 -->
+            <p class="text-orange-500 font-bold mb-8 text-xl">仔細聽聲音，選出正確的拼字</p>
+            
+            <div class="my-10 flex flex-col items-center justify-center gap-6">
+                <button onclick="playCurrentAudio()" class="w-32 h-32 bg-orange-500 text-white rounded-full flex items-center justify-center hover:bg-orange-600 hover:scale-105 transition-all shadow-xl shadow-orange-200 animate-bounce-subtle text-5xl">
+                    🔊
+                </button>
+                <p class="text-slate-500 font-bold text-lg">點擊播放聲音</p>
+            </div>
+
+            <!-- 改為 Flex 排版，適應 3 個選項 -->
+            <div id="phonics-options" class="flex flex-wrap justify-center gap-6">
+                 <!-- 選項動態生成 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 視圖 4: 句型解謎 (Sentences View)          -->
+    <!-- ========================================== -->
+    <div id="view-sentences" class="hidden-view min-h-screen bg-emerald-50 flex-col items-center px-6 pb-6">
+        <div class="bg-white rounded-3xl p-8 max-w-3xl w-full mx-auto shadow-xl fade-in">
+            <div class="text-center mb-8">
+                <p class="text-emerald-500 font-bold mb-2">請將單字排列成正確的句子</p>
+                <h2 id="sentence-zh-text" class="text-2xl sm:text-3xl font-extrabold text-slate-800">中文翻譯</h2>
+            </div>
+
+            <div id="sentence-selected-area" class="min-h-[100px] w-full bg-emerald-50 rounded-2xl border-2 border-dashed border-emerald-300 p-4 flex flex-wrap gap-3 mb-8 items-center justify-center transition-colors">
+                <!-- 動態生成已選單字 -->
+            </div>
+
+            <div id="sentence-available-area" class="flex flex-wrap gap-3 justify-center mb-10 min-h-[60px]">
+                <!-- 動態生成待選單字 -->
+            </div>
+
+            <div class="text-center flex flex-col items-center gap-4">
+                <button id="btn-check-sentence" onclick="checkSentenceAnswer()" class="px-10 py-4 rounded-2xl font-bold text-xl w-full max-w-sm transition-all bg-slate-200 text-slate-400 cursor-not-allowed" disabled>
+                    送出答案
+                </button>
+                <p id="sentence-feedback-msg" class="font-bold h-6 text-lg"></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 視圖 5: 結算畫面 (Result View)             -->
+    <!-- ========================================== -->
+    <div id="view-result" class="hidden-view min-h-screen bg-slate-50 flex-col items-center justify-center p-6">
+        <div class="bg-white rounded-3xl p-10 max-w-md w-full text-center shadow-2xl fade-in mx-auto mt-20">
+            <div class="inline-flex items-center justify-center w-28 h-28 bg-yellow-100 rounded-full mb-6 text-6xl shadow-inner">
+                <span id="result-icon">⭐</span>
+            </div>
+            <h2 id="result-title" class="text-3xl font-bold text-slate-800 mb-2">任務完成！</h2>
+            <p class="text-slate-600 font-medium mb-8 text-lg">你獲得了 <span id="result-score" class="font-bold text-indigo-600 text-2xl">0</span> / <span id="result-total" class="text-xl">0</span> 顆星星</p>
+            
+            <button onclick="goHome()" class="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white py-4 rounded-2xl font-bold text-lg transition-colors shadow-lg shadow-indigo-200">
+                🔄 返回主選單
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // 1. 題庫資料 (已擴充 Book 1 ~ Book 8，並優化聽力選項)
+        // ==========================================
+        const database = {
+            vocab: [
+                {
+                    id: 'v1',
+                    category: "3年級 (Book 1-4): 基礎問候與生活",
+                    questions: [
+                        { en: "eraser", zh: "橡皮擦", options: ["鉛筆", "橡皮擦", "書本", "尺"] },
+                        { en: "grandfather", zh: "祖父/外公", options: ["祖母/外婆", "母親", "祖父/外公", "父親"] },
+                        { en: "doctor", zh: "醫生", options: ["護士", "醫生", "司機", "老師"] },
+                        { en: "swim", zh: "游泳", options: ["跳躍", "畫畫", "游泳", "閱讀"] },
+                        { en: "hungry", zh: "飢餓的", options: ["口渴的", "生氣的", "快樂的", "飢餓的"] }
+                    ]
+                },
+                {
+                    id: 'v2',
+                    category: "4年級 (Book 5-8): 天氣、食物與時間",
+                    questions: [
+                        { en: "cloudy", zh: "多雲的", options: ["晴朗的", "多雲的", "下雨的", "起風的"] },
+                        { en: "hamburger", zh: "漢堡", options: ["三明治", "披薩", "熱狗", "漢堡"] },
+                        { en: "sleeping", zh: "正在睡覺", options: ["正在睡覺", "正在游泳", "正在跑步", "正在閱讀"] },
+                        { en: "bedroom", zh: "臥室", options: ["浴室", "廚房", "客廳", "臥室"] },
+                        { en: "under", zh: "在...下面", options: ["在...上面", "在...裡面", "在...下面", "在...旁邊"] }
+                    ]
+                },
+                {
+                    id: 'v3',
+                    category: "5年級 (Book 1-4): 科目、場所與疾病",
+                    questions: [
+                        { en: "Wednesday", zh: "星期三", options: ["星期一", "星期二", "星期三", "星期四"] },
+                        { en: "science", zh: "自然科學", options: ["數學", "自然科學", "社會", "體育"] },
+                        { en: "hospital", zh: "醫院", options: ["銀行", "圖書館", "郵局", "醫院"] },
+                        { en: "headache", zh: "頭痛", options: ["發燒", "感冒", "牙痛", "頭痛"] },
+                        { en: "stomachache", zh: "胃痛", options: ["流鼻水", "喉嚨痛", "胃痛", "頭痛"] }
+                    ]
+                },
+                {
+                    id: 'v4',
+                    category: "6年級 (Book 5-8): 國家、交通與過去式",
+                    questions: [
+                        { en: "Australia", zh: "澳洲", options: ["日本", "澳洲", "英國", "印度"] },
+                        { en: "by train", zh: "搭火車", options: ["搭公車", "搭捷運", "搭火車", "走路"] },
+                        { en: "go jogging", zh: "去慢跑", options: ["聽音樂", "去慢跑", "打籃球", "上網"] },
+                        { en: "movie theater", zh: "電影院", options: ["動物園", "餐廳", "購物中心", "電影院"] },
+                        { en: "visited a friend", zh: "拜訪朋友", options: ["打籃球", "看電視", "拜訪朋友", "遛狗"] }
+                    ]
+                }
+            ],
+            phonics: [
+                {
+                    id: 'p1',
+                    category: "母音家族 (長短母音辨識)",
+                    questions: [
+                        // 已避開 a/e 混淆，選項改為 3 個，干擾項採用不同母音
+                        { word: "cat", options: ["cat", "cot", "cut"] },
+                        { word: "pig", options: ["pug", "pig", "pag"] },
+                        { word: "bike", options: ["bik", "bike", "bake"] },
+                        { word: "rose", options: ["ros", "ruse", "rose"] },
+                        { word: "cute", options: ["cut", "cute", "cote"] }
+                    ]
+                },
+                {
+                    id: 'p2',
+                    category: "複合字母與母音組合",
+                    questions: [
+                        { word: "sheep", options: ["cheep", "sheep", "seep"] },
+                        // 修正 fone 與 phone 同音的問題，改為測試 p / th / ph 的聽力辨識
+                        { word: "phone", options: ["pone", "thone", "phone"] },
+                        { word: "whale", options: ["shale", "chale", "whale"] },
+                        { word: "rain", options: ["ran", "rain", "roin"] },
+                        { word: "boat", options: ["bot", "bout", "boat"] }
+                    ]
+                }
+            ],
+            sentences: [
+                {
+                    id: 's1',
+                    category: "Level 1: 基礎問答與狀態 (3-4年級)",
+                    questions: [
+                        { zh: "你叫什麼名字？", words: ["What's", "your", "name", "?"] },
+                        { zh: "那是一隻狗嗎？", words: ["Is", "that", "a", "dog", "?"] },
+                        { zh: "天氣如何？", words: ["How's", "the", "weather", "?"] },
+                        { zh: "他正在游泳。", words: ["He", "is", "swimming", "."] }
+                    ]
+                },
+                {
+                    id: 's2',
+                    category: "Level 2: 動作、場所與時間 (5-6年級)",
+                    questions: [
+                        { zh: "今天星期幾？", words: ["What", "day", "is", "today", "?"] },
+                        { zh: "你要去哪裡？", words: ["Where", "are", "you", "going", "?"] },
+                        { zh: "你有發燒嗎？", words: ["Do", "you", "have", "a", "fever", "?"] },
+                        { zh: "我週末去慢跑。", words: ["I", "go", "jogging", "on", "weekends", "."] }
+                    ]
+                },
+                {
+                    id: 's3',
+                    category: "Level 3: 過去式大挑戰 (6年級)",
+                    questions: [
+                        { zh: "你昨天在哪裡？", words: ["Where", "were", "you", "yesterday", "?"] },
+                        { zh: "我昨天在學校。", words: ["I", "was", "at", "school", "yesterday", "."] },
+                        { zh: "你昨天晚上做了什麼？", words: ["What", "did", "you", "do", "last", "night", "?"] },
+                        { zh: "我昨天晚上打籃球。", words: ["I", "played", "basketball", "last", "night", "."] }
+                    ]
+                }
+            ]
+        };
+
+        // ==========================================
+        // 2. 狀態變數
+        // ==========================================
+        let currentMode = ''; 
+        let currentCategoryData = null;
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let totalQuestions = 0;
+        let isProcessing = false;
+
+        let availableWords = [];
+        let selectedWords = [];
+
+        let timerInterval = null;
+        let timeLeft = 15;
+        let currentTimeLimit = 15; // 新增：用來記錄當前模式的時間限制
+
+        const views = {
+            menu: document.getElementById('view-menu'),
+            vocab: document.getElementById('view-vocab'),
+            phonics: document.getElementById('view-phonics'),
+            sentences: document.getElementById('view-sentences'),
+            result: document.getElementById('view-result'),
+            header: document.getElementById('game-header')
+        };
+
+        const uiElements = {
+            progress: document.getElementById('ui-progress'),
+            score: document.getElementById('ui-score'),
+            timer: document.getElementById('ui-timer'),
+            timerContainer: document.getElementById('ui-timer-container')
+        };
+
+        // ==========================================
+        // 3. 語音發音功能 (Web Speech API)
+        // ==========================================
+        function speak(text) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel(); 
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'en-US';
+                utterance.rate = 0.85; 
+                const voices = window.speechSynthesis.getVoices();
+                const usVoice = voices.find(v => v.lang === 'en-US' && v.name.includes('Female'));
+                if(usVoice) utterance.voice = usVoice;
+                
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.onvoiceschanged = () => { window.speechSynthesis.getVoices(); };
+        }
+
+        function playCurrentAudio() {
+            if(!currentCategoryData) return;
+            const q = currentCategoryData.questions[currentQuestionIndex];
+            if(currentMode === 'vocab') speak(q.en);
+            if(currentMode === 'phonics') speak(q.word);
+            if(currentMode === 'sentences') speak(q.words.join(' '));
+        }
+
+        // ==========================================
+        // 4. 畫面切換與計時器邏輯
+        // ==========================================
+        function switchView(targetViewId) {
+            Object.values(views).forEach(v => v.classList.add('hidden-view'));
+            
+            if(targetViewId === 'menu' || targetViewId === 'result') {
+                views.header.classList.add('hidden-view');
+            } else {
+                views.header.classList.remove('hidden-view');
+            }
+            
+            views[targetViewId].classList.remove('hidden-view');
+            views[targetViewId].style.display = 'flex';
+            
+            if(targetViewId === 'menu') {
+                 Object.values(views).forEach(v => v.style.display = '');
+                 views.menu.classList.remove('hidden-view');
+            }
+        }
+
+        function goHome() {
+            window.speechSynthesis.cancel();
+            stopTimer();
+            switchView('menu');
+        }
+
+        function startTimer() {
+            clearInterval(timerInterval);
+            
+            // 判斷當前模式：單字與發音 5 秒，句型維持 15 秒
+            if (currentMode === 'vocab' || currentMode === 'phonics') {
+                currentTimeLimit = 5;
+            } else {
+                currentTimeLimit = 15;
+            }
+            
+            timeLeft = currentTimeLimit;
+            uiElements.timer.textContent = timeLeft;
+            uiElements.timerContainer.classList.remove('bg-red-100', 'text-red-600', 'animate-pulse');
+            uiElements.timerContainer.classList.add('bg-white', 'text-slate-700');
+
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                uiElements.timer.textContent = timeLeft;
+
+                // 設定警告時間：5秒模式剩 2 秒閃爍，15秒模式剩 5 秒閃爍
+                const warningTime = currentTimeLimit === 5 ? 2 : 5;
+
+                if (timeLeft <= warningTime && timeLeft > 0) {
+                    uiElements.timerContainer.classList.remove('bg-white', 'text-slate-700');
+                    uiElements.timerContainer.classList.add('bg-red-100', 'text-red-600', 'animate-pulse');
+                }
+
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    timeUp();
+                }
+            }, 1000);
+        }
+
+        function stopTimer() {
+            clearInterval(timerInterval);
+        }
+
+        function timeUp() {
+            if (isProcessing) return;
+            isProcessing = true;
+            
+            speak("Time is up");
+
+            if (currentMode === 'vocab' || currentMode === 'phonics') {
+                const optsContainer = document.getElementById(currentMode + '-options');
+                const allBtns = optsContainer.children;
+                for(let btn of allBtns) {
+                    btn.disabled = true;
+                    btn.classList.add('opacity-50', 'cursor-not-allowed');
+                }
+            } else if (currentMode === 'sentences') {
+                document.getElementById('sentence-feedback-msg').textContent = "時間到！";
+                document.getElementById('sentence-feedback-msg').className = "font-bold h-6 text-xl text-red-500";
+            }
+
+            setTimeout(nextQuestion, 2000);
+        }
+
+        // ==========================================
+        // 5. 遊戲主流程
+        // ==========================================
+        function startGame(mode, categoryId) {
+            currentMode = mode;
+            currentCategoryData = database[mode].find(c => c.id === categoryId);
+            currentQuestionIndex = 0;
+            score = 0;
+            totalQuestions = currentCategoryData.questions.length;
+            isProcessing = false;
+
+            updateUIHeader();
+            switchView(mode);
+            loadQuestion();
+        }
+
+        function updateUIHeader() {
+            uiElements.progress.textContent = `${currentQuestionIndex + 1} / ${totalQuestions}`;
+            uiElements.score.textContent = score;
+        }
+
+        function loadQuestion() {
+            isProcessing = false;
+            updateUIHeader();
+            startTimer();
+            const q = currentCategoryData.questions[currentQuestionIndex];
+
+            if (currentMode === 'vocab') {
+                document.getElementById('vocab-en-text').textContent = q.en;
+                const optsContainer = document.getElementById('vocab-options');
+                optsContainer.innerHTML = q.options.map(opt => 
+                    `<button onclick="handleMultipleChoice(this, '${opt}', '${q.zh}')" class="py-5 px-6 rounded-2xl text-xl font-bold border-2 bg-white border-blue-100 hover:border-blue-400 hover:bg-blue-50 text-slate-700 transition-all duration-200">${opt}</button>`
+                ).join('');
+                setTimeout(() => speak(q.en), 300);
+            } 
+            else if (currentMode === 'phonics') {
+                const optsContainer = document.getElementById('phonics-options');
+                // 聽力選項改為 flex 包裝，按鈕加大加寬
+                optsContainer.innerHTML = q.options.map(opt => 
+                    `<button onclick="handleMultipleChoice(this, '${opt}', '${q.word}')" class="py-6 px-10 rounded-2xl text-3xl font-bold border-2 bg-white border-orange-100 hover:border-orange-400 hover:bg-orange-50 text-slate-700 transition-all duration-200 tracking-wider w-full sm:w-auto min-w-[160px]">${opt}</button>`
+                ).join('');
+                setTimeout(() => speak(q.word), 300);
+            }
+            else if (currentMode === 'sentences') {
+                document.getElementById('sentence-zh-text').textContent = q.zh;
+                document.getElementById('sentence-feedback-msg').textContent = '';
+                document.getElementById('sentence-feedback-msg').className = 'font-bold h-6 text-lg';
+                
+                selectedWords = [];
+                availableWords = [...q.words].sort(() => Math.random() - 0.5);
+                renderSentenceAreas();
+            }
+        }
+
+        function nextQuestion() {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < totalQuestions) {
+                loadQuestion();
+            } else {
+                showResult();
+            }
+        }
+
+        // ==========================================
+        // 6. 答題判斷邏輯
+        // ==========================================
+        function handleMultipleChoice(btnElement, selectedOpt, correctOpt) {
+            if (isProcessing) return;
+            isProcessing = true;
+            stopTimer();
+
+            const allBtns = btnElement.parentElement.children;
+            for(let btn of allBtns) {
+                btn.disabled = true;
+                btn.classList.add('opacity-70', 'cursor-not-allowed');
+            }
+
+            if (selectedOpt === correctOpt) {
+                score++;
+                uiElements.score.textContent = score;
+                btnElement.className = "py-6 px-10 rounded-2xl text-3xl font-bold border-2 bg-emerald-100 border-emerald-500 text-emerald-800 transition-all duration-200 transform scale-105 w-full sm:w-auto min-w-[160px]";
+                
+                setTimeout(nextQuestion, 1200);
+            } else {
+                btnElement.className = "py-6 px-10 rounded-2xl text-3xl font-bold border-2 bg-red-50 border-red-300 text-red-500 transition-all duration-200 w-full sm:w-auto min-w-[160px]";
+                
+                for(let btn of allBtns) {
+                    if(btn.textContent === correctOpt) {
+                        btn.className = "py-6 px-10 rounded-2xl text-3xl font-bold border-2 bg-emerald-50 border-emerald-400 text-emerald-700 transition-all duration-200 border-dashed w-full sm:w-auto min-w-[160px]";
+                    }
+                }
+                setTimeout(nextQuestion, 1800);
+            }
+        }
+
+        function renderSentenceAreas() {
+            const availArea = document.getElementById('sentence-available-area');
+            const selArea = document.getElementById('sentence-selected-area');
+            const checkBtn = document.getElementById('btn-check-sentence');
+
+            availArea.innerHTML = availableWords.map((w, i) => 
+                `<button onclick="selectWord(${i})" class="px-5 py-3 bg-white border-2 border-slate-200 text-slate-700 rounded-xl font-bold text-xl shadow-sm hover:border-emerald-400 hover:text-emerald-600 transition-colors transform hover:-translate-y-1">${w}</button>`
+            ).join('');
+
+            if(selectedWords.length === 0) {
+                selArea.innerHTML = `<span class="text-emerald-400/70 font-bold">點擊下方的單字來組裝句子</span>`;
+            } else {
+                selArea.innerHTML = selectedWords.map((w, i) => 
+                    `<button onclick="deselectWord(${i})" class="px-5 py-3 bg-emerald-600 text-white rounded-xl font-bold text-xl shadow-md hover:bg-emerald-700 transition-colors">${w}</button>`
+                ).join('');
+            }
+
+            if(availableWords.length === 0) {
+                checkBtn.disabled = false;
+                checkBtn.className = "px-10 py-4 rounded-2xl font-bold text-xl w-full max-w-sm transition-all bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-200 transform hover:scale-105";
+            } else {
+                checkBtn.disabled = true;
+                checkBtn.className = "px-10 py-4 rounded-2xl font-bold text-xl w-full max-w-sm transition-all bg-slate-200 text-slate-400 cursor-not-allowed";
+            }
+        }
+
+        function selectWord(index) {
+            if(isProcessing) return;
+            const word = availableWords.splice(index, 1)[0];
+            selectedWords.push(word);
+            renderSentenceAreas();
+        }
+
+        function deselectWord(index) {
+            if(isProcessing) return;
+            const word = selectedWords.splice(index, 1)[0];
+            availableWords.push(word);
+            renderSentenceAreas();
+        }
+
+        function checkSentenceAnswer() {
+            if(isProcessing) return;
+            isProcessing = true;
+            stopTimer();
+            
+            const q = currentCategoryData.questions[currentQuestionIndex];
+            const studentAns = selectedWords.join(' ');
+            const correctAns = q.words.join(' ');
+            const msgEl = document.getElementById('sentence-feedback-msg');
+
+            if (studentAns === correctAns) {
+                score++;
+                uiElements.score.textContent = score;
+                msgEl.textContent = "完全正確！太棒了！";
+                msgEl.className = "font-bold h-6 text-xl text-emerald-500 animate-bounce";
+                speak(correctAns); 
+                setTimeout(nextQuestion, 2000);
+            } else {
+                msgEl.textContent = "順序好像不對喔，退回重排！";
+                msgEl.className = "font-bold h-6 text-xl text-red-500";
+                
+                const selArea = document.getElementById('sentence-selected-area');
+                selArea.classList.add('border-red-400', 'bg-red-50');
+                
+                setTimeout(() => {
+                    selArea.classList.remove('border-red-400', 'bg-red-50');
+                    availableWords = [...availableWords, ...selectedWords];
+                    selectedWords = [];
+                    msgEl.textContent = "";
+                    isProcessing = false;
+                    renderSentenceAreas();
+                    startTimer(); // 重新開始計時
+                }, 1500);
+            }
+        }
+
+        // ==========================================
+        // 7. 結算畫面與選單渲染
+        // ==========================================
+        function showResult() {
+            stopTimer();
+            switchView('result');
+            document.getElementById('result-score').textContent = score;
+            document.getElementById('result-total').textContent = totalQuestions;
+            
+            const iconEl = document.getElementById('result-icon');
+            const titleEl = document.getElementById('result-title');
+            
+            if (score === totalQuestions) {
+                iconEl.textContent = "🏆";
+                titleEl.textContent = "太棒了！滿分過關！";
+                iconEl.parentElement.classList.add('bg-yellow-200');
+            } else if (score >= totalQuestions / 2) {
+                iconEl.textContent = "🌟";
+                titleEl.textContent = "表現不錯！繼續保持！";
+            } else {
+                iconEl.textContent = "💪";
+                titleEl.textContent = "再接再厲！你一定可以！";
+            }
+        }
+
+        function renderMenu() {
+            const createBtn = (cat, mode, colorClass, hoverClass) => `
+                <button onclick="startGame('${mode}', '${cat.id}')" class="w-full text-left px-5 py-4 ${colorClass} ${hoverClass} rounded-2xl font-bold transition-all duration-200 shadow-sm flex justify-between items-center group">
+                    <span>${cat.category}</span>
+                    <span class="opacity-0 group-hover:opacity-100 transition-opacity">➡️</span>
+                </button>
+            `;
+
+            document.getElementById('menu-vocab-container').innerHTML = 
+                database.vocab.map(c => createBtn(c, 'vocab', 'bg-blue-50 text-blue-700', 'hover:bg-blue-600 hover:text-white')).join('');
+            
+            document.getElementById('menu-phonics-container').innerHTML = 
+                database.phonics.map(c => createBtn(c, 'phonics', 'bg-orange-50 text-orange-700', 'hover:bg-orange-500 hover:text-white')).join('');
+            
+            document.getElementById('menu-sentences-container').innerHTML = 
+                database.sentences.map(c => createBtn(c, 'sentences', 'bg-emerald-50 text-emerald-700', 'hover:bg-emerald-600 hover:text-white')).join('');
+        }
+
+        window.onload = () => {
+            renderMenu();
+        };
+
+    </script>
+</body>
+</html>
