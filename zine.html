@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>國小英語 8頁折疊小書產生器</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* ==========================================
+           列印專用設定 (保證完美滿版 A4)
+           ========================================== */
+        @media print {
+            @page {
+                size: A4 landscape; /* 強制 A4 橫向 */
+                margin: 0; /* 移除預設邊距 */
+            }
+            body {
+                margin: 0;
+                padding: 0;
+                background: white;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            /* 隱藏所有操作介面 */
+            .no-print { display: none !important; }
+            
+            #zine-grid-container {
+                width: 297mm;
+                height: 210mm;
+                margin: 0;
+                padding: 0;
+                border: none;
+                box-shadow: none;
+                transform: none !important;
+            }
+        }
+
+        /* 螢幕預覽模式設定 */
+        @media screen {
+            body { background-color: #f8fafc; }
+            #zine-grid-container {
+                width: 297mm;
+                height: 210mm;
+                background: white;
+                margin: 20px auto;
+                box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            }
+        }
+
+        /* 網格與虛線、實線設定 */
+        .zine-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 25%);
+            grid-template-rows: repeat(2, 50%);
+            box-sizing: border-box;
+        }
+        
+        .zine-cell {
+            box-sizing: border-box;
+            padding: 4mm;
+            border-right: 1.5px dashed #cbd5e1;
+            border-bottom: 1.5px dashed #cbd5e1;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* 移除最外層網格線 */
+        .zine-cell:nth-child(4n) { border-right: none; }
+        .zine-cell:nth-child(n+5) { border-bottom: none; }
+        
+        /* 中間的【剪裁線】(位於 Cell 2 和 Cell 3 的底部) */
+        .cut-border {
+            border-bottom: 2.5px solid #1e293b !important;
+        }
+    </style>
+</head>
+<body class="font-sans text-slate-800">
+
+    <!-- ==========================================
+         控制面板 (僅在螢幕顯示，列印時隱藏)
+         ========================================== -->
+    <div class="no-print bg-slate-800 text-white p-4 shadow-lg sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div>
+                <h1 class="text-xl font-bold flex items-center gap-2">
+                    <span>📖</span> 國小英語 Zine 小書產生器
+                </h1>
+                <p class="text-slate-400 text-sm mt-1">選擇年級後，點擊列印。沿著中央「黑色實線」剪一刀即可折疊成冊。</p>
+            </div>
+            
+            <div class="flex items-center gap-2">
+                <button onclick="renderZine(0)" id="btn-0" class="grade-btn px-4 py-2 rounded-lg font-bold transition-colors bg-indigo-600 hover:bg-indigo-500">3年級</button>
+                <button onclick="renderZine(1)" id="btn-1" class="grade-btn px-4 py-2 rounded-lg font-bold transition-colors bg-slate-700 hover:bg-slate-600">4年級</button>
+                <button onclick="renderZine(2)" id="btn-2" class="grade-btn px-4 py-2 rounded-lg font-bold transition-colors bg-slate-700 hover:bg-slate-600">5年級</button>
+                <button onclick="renderZine(3)" id="btn-3" class="grade-btn px-4 py-2 rounded-lg font-bold transition-colors bg-slate-700 hover:bg-slate-600">6年級</button>
+                <div class="w-px h-8 bg-slate-600 mx-2"></div>
+                <button onclick="window.print()" class="px-5 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-900 rounded-lg font-extrabold shadow-md flex items-center gap-2 transition-transform hover:scale-105">
+                    🖨️ 列印 A4
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 水平捲動區域 (避免小螢幕破版) -->
+    <div class="w-full overflow-x-auto no-print-scroll pb-10">
+        <!-- ==========================================
+             Zine 網格容器 (A4 實體尺寸)
+             ========================================== -->
+        <div id="zine-grid-container" class="zine-grid">
+            <!-- 內容由 JavaScript 動態生成 -->
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // 1. 各年級課程資料庫 (包含句型、單字、發音秘訣)
+        // ==========================================
+        const zineData = [
+            {
+                name: "三年級",
+                units: [
+                    { title: "Unit 1: What's Your Name?", sentence: { en: "What's your name? I'm Mia.", zh: "你叫什麼名字？我是Mia。" }, vocab: [{ en: "one", zh: "一" }, { en: "two", zh: "二" }, { en: "three", zh: "三" }, { en: "four", zh: "四" }, { en: "five", zh: "五" }], phonics: { rule: "Aa-Ee 基礎音", tip: "熟悉前五個字母基礎發音與開口大小" } },
+                    { title: "Unit 2: How Old Are You?", sentence: { en: "How old are you? I'm ten.", zh: "你幾歲？我十歲。" }, vocab: [{ en: "six", zh: "六" }, { en: "seven", zh: "七" }, { en: "eight", zh: "八" }, { en: "nine", zh: "九" }, { en: "ten", zh: "十" }], phonics: { rule: "Kk-Oo 基礎音", tip: "注意發 O 時嘴型要圓圓的" } },
+                    { title: "Unit 3: What's This?", sentence: { en: "What's this? It's a book.", zh: "這是什麼？這是一本書。" }, vocab: [{ en: "book", zh: "書" }, { en: "pen", zh: "鋼筆" }, { en: "pencil", zh: "鉛筆" }, { en: "eraser", zh: "橡皮擦" }, { en: "ruler", zh: "尺" }], phonics: { rule: "Pp-Tt 基礎音", tip: "感受發 P 跟 T 時的強烈吐氣聲(氣音)" } },
+                    { title: "Unit 4: What Color Is It?", sentence: { en: "What color is it? It's blue.", zh: "這是什麼顏色？這是藍色。" }, vocab: [{ en: "blue", zh: "藍" }, { en: "green", zh: "綠" }, { en: "red", zh: "紅" }, { en: "yellow", zh: "黃" }, { en: "white", zh: "白" }], phonics: { rule: "Uu-Zz 基礎音", tip: "熟悉字尾字母發音，注意 V 要輕咬下唇" } },
+                    { title: "Unit 5: Is That a Dog?", sentence: { en: "Is that a dog? Yes, it is.", zh: "那是一隻狗嗎？是的。" }, vocab: [{ en: "dog", zh: "狗" }, { en: "cat", zh: "貓" }, { en: "bird", zh: "鳥" }, { en: "fish", zh: "魚" }, { en: "big", zh: "大" }], phonics: { rule: "短母音 a, e", tip: "a 嘴型大唸「ㄝ」(cat)；e 嘴巴扁唸「ㄝ」(pet)" } },
+                    { title: "Unit 6: Can You Swim?", sentence: { en: "What can you do? I can swim.", zh: "你會做什麼？我會游泳。" }, vocab: [{ en: "dance", zh: "跳舞" }, { en: "draw", zh: "畫畫" }, { en: "jump", zh: "跳" }, { en: "read", zh: "閱讀" }, { en: "swim", zh: "游泳" }], phonics: { rule: "短母音 i", tip: "嘴角微拉，發短短的「一」(pig, swim)" } },
+                    { title: "Unit 7: Who's She?", sentence: { en: "Who's she? She's my mother.", zh: "她是誰？她是我媽媽。" }, vocab: [{ en: "father", zh: "爸爸" }, { en: "mother", zh: "媽媽" }, { en: "brother", zh: "兄弟" }, { en: "tall", zh: "高的" }, { en: "short", zh: "矮的" }], phonics: { rule: "短母音 o", tip: "嘴型圓圓，發短短的「ㄚ」(dog, pop)" } },
+                    { title: "Unit 8: Is He a Teacher?", sentence: { en: "Are you a student? Yes, I am.", zh: "你是學生嗎？是的。" }, vocab: [{ en: "student", zh: "學生" }, { en: "teacher", zh: "老師" }, { en: "doctor", zh: "醫生" }, { en: "nurse", zh: "護士" }, { en: "cook", zh: "廚師" }], phonics: { rule: "短母音 u", tip: "嘴巴放鬆，發短短的「ㄜ」(cup, tub)" } }
+                ]
+            },
+            {
+                name: "四年級",
+                units: [
+                    { title: "Unit 1: How's the Weather?", sentence: { en: "How's the weather? It's sunny.", zh: "天氣如何？是晴天。" }, vocab: [{ en: "sunny", zh: "晴天" }, { en: "rainy", zh: "雨天" }, { en: "cloudy", zh: "多雲" }, { en: "hot", zh: "熱" }, { en: "cold", zh: "冷" }], phonics: { rule: "子音 b, p, d, t", tip: "p 跟 t 發音時會有強烈吐氣(拿衛生紙會飄)" } },
+                    { title: "Unit 2: Are You Thirsty?", sentence: { en: "Are you hungry? Yes, I am.", zh: "你餓嗎？是的。" }, vocab: [{ en: "angry", zh: "生氣" }, { en: "happy", zh: "快樂" }, { en: "sad", zh: "難過" }, { en: "tired", zh: "疲勞" }, { en: "hungry", zh: "飢餓" }], phonics: { rule: "子音 g, c", tip: "g 發音喉嚨要振動，c 發出像 k 的無聲氣音" } },
+                    { title: "Unit 3: What Are These?", sentence: { en: "What are these? They're apples.", zh: "這些是什麼？這些是蘋果。" }, vocab: [{ en: "apples", zh: "蘋果" }, { en: "bananas", zh: "香蕉" }, { en: "oranges", zh: "橘子" }, { en: "hamburgers", zh: "漢堡" }], phonics: { rule: "子音 v, f", tip: "v 跟 f 都要上排牙齒輕咬下嘴唇，v有振動" } },
+                    { title: "Unit 4: Do You Want Some Pizza?", sentence: { en: "Do you want some juice? Yes, I do.", zh: "你要果汁嗎？是的。" }, vocab: [{ en: "juice", zh: "果汁" }, { en: "milk", zh: "牛奶" }, { en: "tea", zh: "茶" }, { en: "water", zh: "水" }, { en: "pizza", zh: "披薩" }], phonics: { rule: "子音 z, s", tip: "牙齒輕咬，z 喉嚨要振動(像蜜蜂嗡嗡聲)" } },
+                    { title: "Unit 5: What Time Is It?", sentence: { en: "What time is it? It's four o'clock.", zh: "現在幾點？現在四點。" }, vocab: [{ en: "twenty", zh: "二十" }, { en: "thirty", zh: "三十" }, { en: "forty", zh: "四十" }, { en: "fifty", zh: "五十" }], phonics: { rule: "長母音 e_e", tip: "發字母 E 的長音(一～)，字尾 e 不發音" } },
+                    { title: "Unit 6: What Are You Doing?", sentence: { en: "What are you doing? I'm writing.", zh: "你正在做什麼？我正在寫字。" }, vocab: [{ en: "drinking", zh: "喝" }, { en: "eating", zh: "吃" }, { en: "reading", zh: "讀" }, { en: "sleeping", zh: "睡覺" }, { en: "running", zh: "跑" }], phonics: { rule: "長母音 i_e", tip: "發字母 I (愛) 的長音，字尾 e 不發音" } },
+                    { title: "Unit 7: Where Are You?", sentence: { en: "Where are you? I'm in the bedroom.", zh: "你在哪裡？我在臥室。" }, vocab: [{ en: "bathroom", zh: "浴室" }, { en: "bedroom", zh: "臥室" }, { en: "living room", zh: "客廳" }, { en: "kitchen", zh: "廚房" }], phonics: { rule: "長母音 o_e", tip: "發字母 O (歐) 的長音，字尾 e 不發音" } },
+                    { title: "Unit 8: Where's My Hat?", sentence: { en: "Where's my pen? It's in the box.", zh: "筆在哪？在盒子裡。" }, vocab: [{ en: "bag", zh: "包包" }, { en: "box", zh: "盒子" }, { en: "chair", zh: "椅子" }, { en: "desk", zh: "書桌" }, { en: "under", zh: "在..之下" }], phonics: { rule: "長母音 u_e", tip: "發字母 U (右) 的長音，字尾 e 不發音" } }
+                ]
+            },
+            {
+                name: "五年級",
+                units: [
+                    { title: "Unit 1: What Day Is Today?", sentence: { en: "What day is today? It's Friday.", zh: "今天星期幾？星期五。" }, vocab: [{ en: "Monday", zh: "一" }, { en: "Tuesday", zh: "二" }, { en: "Wednesday", zh: "三" }, { en: "Thursday", zh: "四" }, { en: "Friday", zh: "五" }], phonics: { rule: "母音組合 ee, ea", tip: "常發長母音 E (一～)，例: bee, sea" } },
+                    { title: "Unit 2: Do You Have PE Class?", sentence: { en: "Do you have math class on Monday?", zh: "你星期一有數學課嗎？" }, vocab: [{ en: "English", zh: "英文" }, { en: "math", zh: "數學" }, { en: "music", zh: "音樂" }, { en: "PE", zh: "體育" }, { en: "science", zh: "自然" }], phonics: { rule: "母音組合 ie, y", tip: "字尾常發長母音 I (愛)，例: pie, cry" } },
+                    { title: "Unit 3: Where Are You Going?", sentence: { en: "Where are you going? I'm going to the library.", zh: "你要去哪裡？我要去圖書館。" }, vocab: [{ en: "bank", zh: "銀行" }, { en: "hospital", zh: "醫院" }, { en: "library", zh: "圖書館" }, { en: "park", zh: "公園" }, { en: "supermarket", zh: "超市" }], phonics: { rule: "母音組合 oa, ow", tip: "一起發長母音 O (歐)，例: boat, snow" } },
+                    { title: "Unit 4: How Many Koalas Are There?", sentence: { en: "How many lions are there? There are nine.", zh: "有幾隻獅子？九隻。" }, vocab: [{ en: "elephant", zh: "大象" }, { en: "horse", zh: "馬" }, { en: "lion", zh: "獅子" }, { en: "monkey", zh: "猴子" }, { en: "tiger", zh: "老虎" }], phonics: { rule: "母音組合 ue, ui", tip: "一起發長母音 U (ㄨ/右)，例: blue, juice" } },
+                    { title: "Unit 5: What's Wrong?", sentence: { en: "What's wrong? My foot hurts.", zh: "怎麼了？我的腳痛。" }, vocab: [{ en: "eyes", zh: "眼睛" }, { en: "ears", zh: "耳朵" }, { en: "nose", zh: "鼻子" }, { en: "mouth", zh: "嘴巴" }, { en: "hands", zh: "手" }], phonics: { rule: "複合子音 wh, ph", tip: "wh發 /w/ 音；ph 發 /f/ (像f一樣咬下唇)" } },
+                    { title: "Unit 6: Do You Have a Headache?", sentence: { en: "Do you have a fever? Yes, I do.", zh: "你有發燒嗎？是的。" }, vocab: [{ en: "cold", zh: "感冒" }, { en: "fever", zh: "發燒" }, { en: "runny nose", zh: "流鼻水" }, { en: "headache", zh: "頭痛" }, { en: "stomachache", zh: "胃痛" }], phonics: { rule: "複合子音 th", tip: "發音時舌頭要稍微伸出牙齒(分成有聲/無聲)" } },
+                    { title: "Unit 7: What Would You Like?", sentence: { en: "What would you like for lunch? I'd like some salad.", zh: "午餐想吃什麼？沙拉。" }, vocab: [{ en: "breakfast", zh: "早餐" }, { en: "lunch", zh: "午餐" }, { en: "dinner", zh: "晚餐" }, { en: "chicken", zh: "雞肉" }, { en: "salad", zh: "沙拉" }], phonics: { rule: "複合子音 ch, sh", tip: "ch 像「七」(短促有力)，sh 像「噓」(長音)" } },
+                    { title: "Unit 8: Whose Backpack Is That?", sentence: { en: "Whose backpack is this? It's my backpack.", zh: "這是誰的背包？我的。" }, vocab: [{ en: "backpack", zh: "背包" }, { en: "cap", zh: "帽子" }, { en: "umbrella", zh: "雨傘" }, { en: "glasses", zh: "眼鏡" }, { en: "shoes", zh: "鞋子" }], phonics: { rule: "鼻音 ng, nk", tip: "ng 鼻音重(像鼻塞)；nk 會帶出 /k/ 的聲音" } }
+                ]
+            },
+            {
+                name: "六年級",
+                units: [
+                    { title: "Unit 1: Where Are You From?", sentence: { en: "Where are you from? I'm from Taiwan.", zh: "你來自哪裡？台灣。" }, vocab: [{ en: "Australia", zh: "澳洲" }, { en: "Japan", zh: "日本" }, { en: "Singapore", zh: "新加坡" }, { en: "Taiwan", zh: "台灣" }, { en: "USA", zh: "美國" }], phonics: { rule: "R控制母音 ir, ur", tip: "發捲舌音 /ɚ/ (ㄦ)，舌頭要往後捲" } },
+                    { title: "Unit 2: How Do You Go to School?", sentence: { en: "How do you go to school? I go by bike.", zh: "你怎麼上學？騎腳踏車。" }, vocab: [{ en: "by bike", zh: "騎車" }, { en: "by bus", zh: "搭公車" }, { en: "by car", zh: "搭車" }, { en: "by train", zh: "搭火車" }, { en: "on foot", zh: "走路" }], phonics: { rule: "R控制母音 ar, or", tip: "ar 發 /ɑr/ (啊ㄦ)；or 發 /ɔr/ (喔ㄦ)" } },
+                    { title: "Unit 3: What Do You Do on Weekends?", sentence: { en: "What do you do on weekends? I go jogging.", zh: "週末做什麼？去慢跑。" }, vocab: [{ en: "go jogging", zh: "慢跑" }, { en: "listen to music", zh: "聽音樂" }, { en: "play basketball", zh: "打籃球" }, { en: "surf the Internet", zh: "上網" }], phonics: { rule: "雙母音 oi, oy", tip: "發音像「歐伊」，例: coin, boy" } },
+                    { title: "Unit 4: What Time Do You Get Up?", sentence: { en: "What time do you get up? I get up at six thirty.", zh: "幾點起床？六點半。" }, vocab: [{ en: "get up", zh: "起床" }, { en: "go to school", zh: "上學" }, { en: "have lunch", zh: "吃午餐" }, { en: "go home", zh: "回家" }], phonics: { rule: "雙母音 ou, ow", tip: "發音像「阿嗚」，例: house, cow" } },
+                    { title: "Unit 5: Where Were You Yesterday?", sentence: { en: "Where were you yesterday? I was at the mall.", zh: "你昨天在哪？在購物中心。" }, vocab: [{ en: "at home", zh: "在家" }, { en: "at school", zh: "在學校" }, { en: "at the mall", zh: "購物中心" }, { en: "at the zoo", GitHub: "動物園" }], phonics: { rule: "混合子音 cr, gr, tr, dr", tip: "注意 r 舌頭捲起，與前面的子音連在一起" } },
+                    { title: "Unit 6: What Did You Do Last Night?", sentence: { en: "What did you do last night? I visited a friend.", zh: "你昨晚做什麼？拜訪朋友。" }, vocab: [{ en: "cleaned my room", zh: "打掃房間" }, { en: "played basketball", zh: "打籃球" }, { en: "walked the dog", zh: "遛狗" }, { en: "visited a friend", zh: "拜訪朋友" }], phonics: { rule: "混合子音 sw, sp, st, sk", tip: "注意 s 後的無聲子音(p,t,k)要轉成濁音(b,d,g)" } },
+                    { title: "Unit 7: How Much Is the T-shirt?", sentence: { en: "How much is the T-shirt? It's ten dollars.", zh: "這件T恤多少錢？十元。" }, vocab: [{ en: "coat", zh: "大衣" }, { en: "dress", zh: "洋裝" }, { en: "jacket", zh: "夾克" }, { en: "T-shirt", zh: "T恤" }, { en: "pants", zh: "長褲" }], phonics: { rule: "短母音總複習", tip: "確實分辨 a(大ㄝ), e(扁ㄝ), i(短一), o(短ㄚ), u(短ㄜ)" } },
+                    { title: "Unit 8: Favorite Season?", sentence: { en: "What's your favorite season? My favorite season is fall.", zh: "最喜歡什麼季節？秋天。" }, vocab: [{ en: "spring", zh: "春" }, { en: "summer", zh: "夏" }, { en: "fall", zh: "秋" }, { en: "winter", zh: "冬" }, { en: "dry", zh: "乾" }, { en: "wet", zh: "濕" }], phonics: { rule: "長母音總複習", tip: "遇到字尾e或母音組合，確實發出字母本身的長音" } }
+                ]
+            }
+        ];
+
+        // ==========================================
+        // 2. 渲染邏輯 (物理排版映射)
+        // ==========================================
+        function renderZine(gradeIndex) {
+            const grade = zineData[gradeIndex];
+            const grid = document.getElementById('zine-grid-container');
+            grid.innerHTML = '';
+
+            // 更新按鈕樣式
+            document.querySelectorAll('.grade-btn').forEach((btn, idx) => {
+                if (idx === gradeIndex) {
+                    btn.className = "grade-btn px-4 py-2 rounded-lg font-bold transition-colors bg-indigo-600 hover:bg-indigo-500 text-white shadow-md transform scale-105";
+                } else {
+                    btn.className = "grade-btn px-4 py-2 rounded-lg font-bold transition-colors bg-slate-700 hover:bg-slate-600 text-white";
+                }
+            });
+
+            // Zine 小書排版映射：
+            // 折疊後要順序正確，A4紙上的分佈必須是這樣：
+            // 頂部列 (需倒轉 180度)： 第2頁(U2), 第3頁(U3), 第4頁(U4), 第5頁(U5)
+            // 底部列 (正向)：        第1頁(U1/封面), 第8頁(U8/封底), 第7頁(U7), 第6頁(U6)
+            
+            const layoutOrder = [
+                { unitIdx: 1, rotated: true, isCut: false },
+                { unitIdx: 2, rotated: true, isCut: true, hasScissor: true },  // 中央剪裁線
+                { unitIdx: 3, rotated: true, isCut: true },                    // 中央剪裁線
+                { unitIdx: 4, rotated: true, isCut: false },
+                { unitIdx: 0, rotated: false, isCut: false, isCover: true },   // 封面
+                { unitIdx: 7, rotated: false, isCut: false, isBackCover: true }, // 封底
+                { unitIdx: 6, rotated: false, isCut: false },
+                { unitIdx: 5, rotated: false, isCut: false }
+            ];
+
+            layoutOrder.forEach((config) => {
+                const unit = grade.units[config.unitIdx];
+                const pageNum = config.unitIdx + 1; // 頁碼對應 Unit 編號
+                
+                const cell = document.createElement('div');
+                cell.className = `zine-cell ${config.isCut ? 'cut-border' : ''} bg-white`;
+
+                // 控制旋轉的內部容器
+                const inner = document.createElement('div');
+                inner.className = `w-full h-full flex flex-col ${config.rotated ? 'rotate-180' : ''}`;
+
+                // 生成內容 HTML
+                let contentHTML = `
+                    ${config.isCover ? `<div class="text-center mb-1.5"><span class="bg-indigo-700 text-white text-[11px] font-black px-3 py-1 rounded-full shadow-sm">🏆 ${grade.name} 英語總複習</span></div>` : ''}
+                    
+                    <div class="text-center mb-2 ${config.isCover ? 'mt-1' : 'mt-2'}">
+                        <h2 class="text-[16px] font-black text-indigo-900 leading-tight">${unit.title}</h2>
+                    </div>
+
+                    <!-- 句型區塊 -->
+                    <div class="mb-2 w-full">
+                        <span class="inline-block bg-indigo-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-md mb-0.5 shadow-sm">⭐ 實用句型</span>
+                        <div class="bg-indigo-50 p-1.5 rounded-lg text-[13px] text-indigo-950 font-bold border border-indigo-100">
+                            ${unit.sentence.en}<br>
+                            <span class="text-[11px] text-indigo-700 font-normal mt-0.5 inline-block">${unit.sentence.zh}</span>
+                        </div>
+                    </div>
+
+                    <!-- 單字區塊 -->
+                    <div class="mb-2 w-full flex-1">
+                        <span class="inline-block bg-emerald-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-md mb-0.5 shadow-sm">📚 主題單字</span>
+                        <div class="flex flex-wrap gap-x-2 gap-y-1 mt-0.5 text-[12px] bg-emerald-50/50 p-1.5 rounded-lg border border-emerald-100">
+                            ${unit.vocab.map(v => `<span class="font-bold text-slate-800">${v.en} <span class="text-[10px] text-slate-500 font-normal">(${v.zh})</span></span>`).join('')}
+                        </div>
+                    </div>
+
+                    <!-- 發音秘訣區塊 (置底) -->
+                    <div class="mt-auto w-full pb-3">
+                        <span class="inline-block bg-orange-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-md mb-0.5 shadow-sm">🎧 發音秘訣</span>
+                        <div class="bg-orange-50 p-1.5 rounded-lg text-[12px] border border-orange-200">
+                            <span class="font-bold text-orange-900">${unit.phonics.rule}</span><br>
+                            <span class="text-[11px] text-orange-700 mt-0.5 block leading-tight">${unit.phonics.tip}</span>
+                        </div>
+                    </div>
+                    
+                    <!-- 封底姓名欄 -->
+                    ${config.isBackCover ? `<div class="absolute bottom-3 left-0 right-0 text-center text-[12px] font-bold text-slate-600 border-t border-dashed border-slate-300 pt-1.5 mx-4">班級：________ 姓名：________</div>` : ''}
+                    
+                    <!-- 頁碼 -->
+                    <div class="absolute ${config.isCover || config.isBackCover ? 'bottom-2' : 'bottom-1'} right-2 text-[10px] text-slate-300 font-bold">P${pageNum}</div>
+                `;
+
+                inner.innerHTML = contentHTML;
+                cell.appendChild(inner);
+
+                // 在需要剪開的黑線處加上剪刀圖示
+                if (config.hasScissor) {
+                    const scissor = document.createElement('div');
+                    scissor.className = "absolute -bottom-3 right-0 text-[18px] z-50 transform translate-x-1/2 bg-white rounded-full leading-none px-1";
+                    scissor.innerHTML = "✂️";
+                    cell.appendChild(scissor);
+                }
+
+                grid.appendChild(cell);
+            });
+        }
+
+        // 初始化：預設顯示三年級
+        window.onload = () => {
+            renderZine(0);
+        };
+    </script>
+</body>
+</html>
